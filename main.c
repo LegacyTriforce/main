@@ -20,7 +20,7 @@
 //#link "vrambuf.c"
 
 
-/////////////////// METASPRITES ///////////////////////
+/////////////////// METASPRITES //////////////////////////////////
 
 // define a 2x2 metasprite
 #define DEF_METASPRITE_2x2(name,code,pal)\
@@ -58,6 +58,7 @@ const unsigned char name[]={\
         0,      8,      (code)+2,   (pal)|OAM_FLIP_V|OAM_FLIP_H, \
         128};
 
+
 //Player 1
 
 //Idle
@@ -70,6 +71,8 @@ DEF_METASPRITE_2x2_FLIP_HV(p1RollL1, 0x0c, 0);
 DEF_METASPRITE_2x2_FLIP_HV(p1RollL2, 0x14, 0);
 
 
+
+
 //Player 2
 
 //Idle
@@ -80,6 +83,8 @@ DEF_METASPRITE_2x2(p2RollL2, 0x18, 1);
 //Rolling Left
 DEF_METASPRITE_2x2_FLIP_H(p2RollR1, 0x10, 1);
 DEF_METASPRITE_2x2_FLIP_H(p2RollR2, 0x18, 1);
+
+////////////////////////////////////////////////////////////////////////
 
 
 const unsigned char* const playerRollSeq[2][13] = 
@@ -100,6 +105,9 @@ const unsigned char* const playerRollSeq[2][13] =
   }
 };
 
+
+
+
 /*{pal:"nes",layout:"nes"}*/
 const char PALETTE[32] = { 
   0x0F,			// screen color
@@ -114,6 +122,8 @@ const char PALETTE[32] = {
   0x0D,0x2D,0x3A,0x00,	// sprite palette 2
   0x0C,0x27,0x2A	// sprite palette 3
 };
+
+
 
 
 // number of actors (4 h/w sprites each)
@@ -136,7 +146,6 @@ int scroll_pos = 0;
 
 
 
-
 byte rand_tile()
 {
    // random tile#, some stars, some blank
@@ -147,9 +156,6 @@ byte rand_tile()
   }
   return val;
 };
-
-
-
 
 
 
@@ -170,9 +176,8 @@ void setup_graphics()
 
 
 
-
-
-void move_player()
+// move the players and get input
+void player_input()
 {
   char i;
   byte pad;
@@ -266,7 +271,7 @@ void main()
     oam_id = 0;
     
     // set player 0/1 velocity based on controller
-    move_player();
+    player_input();
     
     // draw and move all actors
     for (i=0; i<NUM_ACTORS; i++) 
@@ -304,9 +309,8 @@ void main()
     if (oam_id!=0) oam_hide_rest(oam_id);
     
     // wait for next frame
-    //vrambuf_flush();
     scroll_pos = scroll_pos % 480;
     scroll(0, scroll_pos);
-    ppu_wait_frame();
+    vrambuf_flush();
   }
 }
