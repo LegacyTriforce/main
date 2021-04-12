@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// vertical mirroring for scroll
+#define NES_MIRRORING 0
+
 // include NESLIB header
 #include "neslib.h"
 
@@ -13,8 +16,7 @@
 #include "vrambuf.h"
 
 // link the pattern table into CHR ROM
-
-//#link "sprites1.s"
+//#link "sprites.s"
 //#link "vrambuf.c"
 
 
@@ -57,58 +59,44 @@ const unsigned char name[]={\
         128};
 
 //Player 1
-DEF_METASPRITE_2x2_FLIP_V(player1Idle, 0x4, 0);
-DEF_METASPRITE_2x2(player1RRun1, 0xdc, 0);
-DEF_METASPRITE_2x2(player1RRun2, 0xe0, 0);
-DEF_METASPRITE_2x2(player1RRun3, 0xe4, 0);
-DEF_METASPRITE_2x2(player1RJump, 0xe8, 0);
-DEF_METASPRITE_2x2(player1RClimb, 0xec, 0);
-DEF_METASPRITE_2x2(player1RSad, 0xf0, 0);
 
-DEF_METASPRITE_2x2_FLIP_H(player1LStand, 0xd8, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LRun1, 0xdc, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LRun2, 0xe0, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LRun3, 0xe4, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LJump, 0xe8, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LClimb, 0xec, 0);
-DEF_METASPRITE_2x2_FLIP_H(player1LSad, 0xf0, 0);
+//Idle
+DEF_METASPRITE_2x2_FLIP_V(p1Idle, 0x04, 0);
+//Rolling Right
+DEF_METASPRITE_2x2_FLIP_V(p1RollR1, 0x0c, 0);
+DEF_METASPRITE_2x2_FLIP_V(p1RollR2, 0x14, 0);
+//Rolling Left
+DEF_METASPRITE_2x2_FLIP_HV(p1RollL1, 0x0c, 0);
+DEF_METASPRITE_2x2_FLIP_HV(p1RollL2, 0x14, 0);
+
 
 //Player 2
-DEF_METASPRITE_2x2(player2Idle, 0x8, 1);
-DEF_METASPRITE_2x2(player2RRun1, 0xdc, 3);
-DEF_METASPRITE_2x2(player2RRun2, 0xe0, 3);
-DEF_METASPRITE_2x2(player2RRun3, 0xe4, 3);
-DEF_METASPRITE_2x2(player2RJump, 0xe8, 3);
-DEF_METASPRITE_2x2(player2RClimb, 0xec, 3);
-DEF_METASPRITE_2x2(player2RSad, 0xf0, 3);
 
-DEF_METASPRITE_2x2_FLIP_H(player2LStand, 0x3, 0);
-DEF_METASPRITE_2x2_FLIP_H(player2LRun1, 0xdc, 3);
-DEF_METASPRITE_2x2_FLIP_H(player2LRun2, 0xe0, 3);
-DEF_METASPRITE_2x2_FLIP_H(player2LRun3, 0xe4, 3);
-DEF_METASPRITE_2x2_FLIP_H(player2LJump, 0xe8, 3);
-DEF_METASPRITE_2x2_FLIP_H(player2LClimb, 0xec, 3);
-DEF_METASPRITE_2x2_FLIP_H(player2LSad, 0xf0, 3);
+//Idle
+DEF_METASPRITE_2x2(p2Idle, 0x08, 1);
+//Rolling Right
+DEF_METASPRITE_2x2(p2RollL1, 0x10, 1);
+DEF_METASPRITE_2x2(p2RollL2, 0x18, 1);
+//Rolling Left
+DEF_METASPRITE_2x2_FLIP_H(p2RollR1, 0x10, 1);
+DEF_METASPRITE_2x2_FLIP_H(p2RollR2, 0x18, 1);
 
-const unsigned char* const playerRunSeq[2][19] = 
+
+const unsigned char* const playerRollSeq[2][13] = 
 {
   {
-    player1Idle,
-    player1LRun1, player1LRun2, player1LRun3, 
-    player1LRun1, player1LRun2, player1LRun3, 
-    player1LRun1, player1LRun2, player1LRun3,
-    player1RRun1, player1RRun2, player1RRun3, 
-    player1RRun1, player1RRun2, player1RRun3, 
-    player1RRun1, player1RRun2, player1RRun3,
+    p1Idle,
+    p1RollL1, p1RollL1, p1RollL1,
+    p1RollL2, p1RollL2, p1RollL2,
+    p1RollR1, p1RollR1, p1RollR1,
+    p1RollR2, p1RollR2, p1RollR2,
   },
   {
-    player2Idle,
-    player2LRun1, player2LRun2, player2LRun3, 
-    player2LRun1, player2LRun2, player2LRun3, 
-    player2LRun1, player2LRun2, player2LRun3,
-    player2RRun1, player2RRun2, player2RRun3, 
-    player2RRun1, player2RRun2, player2RRun3, 
-    player2RRun1, player2RRun2, player2RRun3
+    p2Idle,
+    p2RollL1, p2RollL1, p2RollL1,
+    p2RollL2, p2RollL2, p2RollL2,
+    p2RollR1, p2RollR1, p2RollR1,
+    p2RollR2, p2RollR2, p2RollR2,
   }
 };
 
@@ -127,12 +115,10 @@ const char PALETTE[32] = {
   0x0C,0x27,0x2A	// sprite palette 3
 };
 
+
 // number of actors (4 h/w sprites each)
 #define NUM_ACTORS 2
-#define NUM_STARS 8
-
-// vertical mirroring for scroll
-#define NES_MIRRORING 0
+#define NUM_MISSLES 8
 
 // actor x/y positions
 byte actor_x[NUM_ACTORS];
@@ -140,11 +126,33 @@ byte actor_y[NUM_ACTORS];
 // actor x/y deltas per frame (signed)
 sbyte actor_dx[NUM_ACTORS];
 sbyte actor_dy[NUM_ACTORS];
-// actors direction (0 = left, 1 = right)
-char actor_run_dir[NUM_ACTORS];
 
-byte actor_run_animation[NUM_ACTORS];
-byte actor_stand_sprite[NUM_ACTORS];
+byte rollseq[NUM_ACTORS];
+
+byte missles[NUM_ACTORS][NUM_MISSLES];
+
+int scroll_pos = 0;
+
+
+
+
+
+byte rand_tile()
+{
+   // random tile#, some stars, some blank
+  byte val = 0;
+  if((rand() & 0xf2) == 0)
+  {
+  	val = rand() % 6 + 0x58;
+  }
+  return val;
+};
+
+
+
+
+
+
 
 // setup PPU and tables
 void setup_graphics() 
@@ -159,6 +167,11 @@ void setup_graphics()
   ppu_on_all();
 }
 
+
+
+
+
+
 void move_player()
 {
   char i;
@@ -169,18 +182,19 @@ void move_player()
     pad = pad_poll(i);
     
     // move actor[i] left/right
-    if (pad & PAD_LEFT && actor_x[i] > 6) 
+    if (pad & PAD_LEFT && actor_x[i] > 8) 
     {
       actor_dx[i]=-2;
-      actor_run_dir[i] = 0;
     }
-    else if (pad & PAD_RIGHT && actor_x[i] < 234) 
+    else if (pad & PAD_RIGHT && actor_x[i] < 232) 
     {
       actor_dx[i]=2;
-      actor_run_dir[i] = 1;
     }
-    else 
+    else
+    {
       actor_dx[i]=0;
+    }
+     
     
     // ACTIONS //
     
@@ -201,23 +215,17 @@ void move_player()
   }
 }
 
-void move_stars()
-{
-  char i;
-  for(i = 0; i<NUM_STARS; i++)
-  {
-    
-  }
-}
+
+
+
+
   
 // main program
 void main() 
 {
   char oam_id;	// sprite ID	
   char i;
-  
-  // setup graphics
-  setup_graphics();
+  char j;
   
   // initialize actors with random values
   for (i=0; i<NUM_ACTORS; i++) 
@@ -233,48 +241,72 @@ void main()
     }
     actor_dx[i] = 0;
     actor_dy[i] = 0;
-    actor_run_dir[i] = 0;
+    rollseq[i] = 0;
   }
+  
+  for (i = 0; i < 30; i++)
+  {
+    for (j = 0; j < 32; j++)
+    {
+       vram_adr(NTADR_A(j, i));   // The screen 
+       vram_put(rand_tile());
+ 
+       vram_adr(NTADR_C(j, i));    // The screen "above" the starting screen
+       vram_put(rand_tile());
+    }
+  }
+  
+  // setup graphics
+  setup_graphics();
   
   // loop forever
   while (1) 
   {
     // start with OAMid/sprite 0
     oam_id = 0;
+    
     // set player 0/1 velocity based on controller
-    vram_adr(NTADR_A(2, 2));
-    vram_fill(0x1, 10);
     move_player();
+    
     // draw and move all actors
-    for (i=0; i<NUM_ACTORS; i++) {
-      byte runseq = actor_x[i] & 8;
-      runseq += 1;
+    for (i=0; i<NUM_ACTORS; i++) 
+    {
+      rollseq[i] += 1;
+      
       if (actor_dx[i] > 0)
       {
-        runseq += 8;
-        oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRunSeq[i][runseq]);
+        rollseq[i] += 6;
+        if (rollseq[i] >= 12)
+          rollseq[i] = 12;
+        
+        oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
       	actor_x[i] += actor_dx[i];
       }
       else if(actor_dx[i] < 0)
       {
-        oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRunSeq[i][runseq]);
+        if(rollseq[i] >= 6)
+          rollseq[i] = 6;
+        
+        oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
       	actor_x[i] += actor_dx[i];
       }
       else
       {
-        if(actor_run_dir[i] == 1)
-          oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRunSeq[i][1]);
-        else
-          oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRunSeq[i][0]);
+        rollseq[i] = 0;
+        oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
       }
-      
     }
     
+    scroll_pos += 1;
+      
     // hide rest of sprites
     // if we haven't wrapped oam_id around to 0
     if (oam_id!=0) oam_hide_rest(oam_id);
     
     // wait for next frame
-    vrambuf_flush();
+    //vrambuf_flush();
+    scroll_pos = scroll_pos % 480;
+    scroll(0, scroll_pos);
+    ppu_wait_frame();
   }
 }
