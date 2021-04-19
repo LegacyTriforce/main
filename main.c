@@ -329,14 +329,71 @@ void game_over_screen(bool player1Win)
 
 
 
-// RESTARTS THE ROUND IF A PLAYER LOSES ALL HEARTS
-void restart_round()
+// DRAW STAR FIELD
+void draw_starfield()
 {
   byte i;
   byte j;
   
-  round_num += 1;
+  // Starfield
+  for (i = 0; i < 30; i++)
+  {
+    for (j = 0; j < 32; j++)
+    {
+      if(i > 5)
+      {
+       byte val = rand_tile();
+       vram_adr(NTADR_A(j, i));   // The screen 
+       vram_put(val);
+ 
+       vram_adr(NTADR_C(j, i));    // The screen "above" the starting screen
+       vram_put(val);
+      }
+      else
+      {
+        vram_adr(NTADR_A(j, i));   // The screen 
+        vram_put(rand_tile());
+ 
+        vram_adr(NTADR_C(j, i));    // The screen "above" the starting screen
+        vram_put(rand_tile());
+      }  
+    }
+  }
+}
+
+
+
+// RESTARTS THE ROUND IF A PLAYER LOSES ALL HEARTS
+void restart_round(bool isGameOver)
+{
+  byte i;
+  byte j;
   
+  if(!isGameOver)
+  {
+    round_num += 1;
+    if(actor_lives[0] == 0)
+      game_over_screen(false);
+    else if(actor_lives[1] == 0)
+      game_over_screen(true);
+  }
+  else
+  {
+    actor_lives[0] = 3;
+    actor_lives[1] = 3;
+    round_num = 0;
+    draw_starfield();
+    
+    ppu_off();
+    vram_adr(NTADR_A(0, 1));
+    vram_unrle(status_bar);
+    ppu_on_all();
+    
+    setup_graphics();
+    
+    game_over = false;
+  }
+
   for(i = 0; i < NUM_ACTORS; i++)
   {
     if(round_num % 2 == 0)
@@ -365,7 +422,7 @@ void restart_round()
         actor_y[i] = 50;
       }
     }
-    
+
     actor_dx[i] = 0;
     actor_dy[i] = 0;
     actor_health[i] = 3;
@@ -374,23 +431,18 @@ void restart_round()
     actor_cooldown[i][0] = 0;
     actor_cooldown[i][1] = 0;
     rollseq[i] = 0;
-    
+
     round_counter = 120;
-    
+
     for (j = 0; j < NUM_MISSILES; j++) 
     { 
       Missile* mis = &missiles[i][j];
       if (mis->ypos != YOFFSCREEN) 
       {
-          mis->ypos = YOFFSCREEN;
-          mis->isFired = false;
+        mis->ypos = YOFFSCREEN;
+        mis->isFired = false;
       }
     }
-    
-    if(actor_lives[0] == 0)
-      game_over_screen(false);
-    else if(actor_lives[1] == 0)
-      game_over_screen(true);
   }
 }
 
@@ -415,6 +467,18 @@ void move_missiles()
           mis->ypos = YOFFSCREEN;
           mis->isFired = false;
         }
+        
+        if(check_collision(actor_x[1-i]+8, mis->xpos+4, actor_y[1-i]+8, mis->ypos+4))
+        {
+          actor_health[1-i] -= 1;
+          mis->ypos = YOFFSCREEN;
+          mis->isFired = false;
+          if(actor_health[1-i] == 0)
+          {
+            actor_lives[1-i] -= 1;
+            restart_round(false);
+          }
+        }
       }
     }
   }
@@ -422,7 +486,7 @@ void move_missiles()
 
 
 
-// PlAYER'S MOVEMENT AND INPUTS
+// PLAYER'S MOVEMENT AND INPUTS
 void player_input()
 {
   char i;
@@ -435,54 +499,64 @@ void player_input()
     // poll controller i (0-1)
     pad = pad_poll(i);
     
-    // move actor[i] left/right
-    if (pad & PAD_LEFT && actor_x[i] > 8) 
+    if(!game_over)
     {
-      actor_dx[i]=-2;
-    }
-    else if (pad & PAD_RIGHT && actor_x[i] < 232) 
-    {
-      actor_dx[i]=2;
+      // move actor[i] left/right
+      if (pad & PAD_LEFT && actor_x[i] > 8) 
+      {
+        actor_dx[i]=-2;
+      }
+      else if (pad & PAD_RIGHT && actor_x[i] < 232) 
+      {
+        actor_dx[i]=2;
+      }
+      else
+      {
+        actor_dx[i]=0;
+      }
+
+
+      // ACTIONS //
+
+      if (pad & PAD_A && actor_can_fire[i])
+      {
+        if(actor_missile_num[i] > 0)
+        {
+          Missile* mis;
+          for(j = 0; j < NUM_MISSILES; j++)
+          {
+            mis = &missiles[i][j];
+            if(!mis->isFired)
+            {
+              mis->isFired = true;
+              break;
+            }
+          }
+          actor_missile_num[i] -= 1;
+          actor_can_fire[i] = false;
+          actor_cooldown[i][0] = 15;
+          actor_cooldown[i][1] = 60;
+
+          if(i == 1)
+          {
+            mis->xpos = actor_x[i] + 4;
+            mis->ypos = actor_y[i] - 16;
+            mis->dy = -2;
+          }
+          else
+          {
+            mis->xpos = actor_x[i] + 4;
+            mis->ypos = actor_y[i] + 16;
+            mis->dy = 2;
+          }
+        }
+      }
     }
     else
     {
-      actor_dx[i]=0;
-    }
-     
-    
-    // ACTIONS //
-    
-    if (pad & PAD_A && actor_can_fire[i])
-    {
-      if(actor_missile_num[i] > 0)
+      if(pad & PAD_START)
       {
-        Missile* mis;
-        for(j = 0; j < NUM_MISSILES; j++)
-        {
-          mis = &missiles[i][j];
-          if(!mis->isFired)
-          {
-            mis->isFired = true;
-            break;
-          }
-        }
-        actor_missile_num[i] -= 1;
-        actor_can_fire[i] = false;
-        actor_cooldown[i][0] = 15;
-        actor_cooldown[i][1] = 60;
-        
-        if(i == 1)
-        {
-          mis->xpos = actor_x[i] + 4;
-          mis->ypos = actor_y[i] - 16;
-          mis->dy = -2;
-        }
-        else
-        {
-          mis->xpos = actor_x[i] + 4;
-          mis->ypos = actor_y[i] + 16;
-          mis->dy = 2;
-        }
+        restart_round(true);
       }
     }
   }
@@ -521,32 +595,10 @@ void main()
     rollseq[i] = 0;
   }  
   
-  // Starfield
-  for (i = 0; i < 30; i++)
-  {
-    for (j = 0; j < 32; j++)
-    {
-      if(i > 5)
-      {
-       byte val = rand_tile();
-       vram_adr(NTADR_A(j, i));   // The screen 
-       vram_put(val);
- 
-       vram_adr(NTADR_C(j, i));    // The screen "above" the starting screen
-       vram_put(val);
-      }
-      else
-      {
-        vram_adr(NTADR_A(j, i));   // The screen 
-        vram_put(rand_tile());
- 
-        vram_adr(NTADR_C(j, i));    // The screen "above" the starting screen
-        vram_put(rand_tile());
-      }  
-    }
-  }
+  //draw stars
+  draw_starfield();
   
-    // draw status_bar
+  // draw status_bar
   vram_adr(NTADR_A(0, 1));
   vram_unrle(status_bar);
   
@@ -574,29 +626,8 @@ void main()
         player_input();
 
         move_missiles();
-
-        for(i = 0; i < NUM_ACTORS; i++)
-        {
-          for(j = 0; j < NUM_MISSILES; j++)
-          {
-            Missile* mis = &missiles[i][j];
-            if (mis->ypos != YOFFSCREEN)
-            {
-              if(check_collision(actor_x[1-i]+8, mis->xpos+4, actor_y[1-i]+8, mis->ypos+4))
-              {
-                actor_health[1-i] -= 1;
-                mis->ypos = YOFFSCREEN;
-                mis->isFired = false;
-                if(actor_health[1-i] == 0)
-                {
-                    actor_lives[1-i] -= 1;
-                    restart_round();
-                }
-              }
-            }
-          }
-        }
       }
+      
       // draw and move all actors
       for (i=0; i < NUM_ACTORS; i++) 
       {
