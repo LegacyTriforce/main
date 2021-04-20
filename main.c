@@ -305,7 +305,7 @@ void setup_graphics()
 // CHECK COLLISION BETWEEN TWO OBJECTS
 bool check_collision(int x1, int x2, int y1, int y2)
 {
-  if(abs(x1 - x2) + abs(y1 - y2) <= 24)
+  if(abs(x1 - x2) + abs(y1 - y2) <= 12)
   {
     return true;
   }
@@ -382,14 +382,12 @@ void restart_round(bool isGameOver)
     actor_lives[0] = 3;
     actor_lives[1] = 3;
     round_num = 0;
-    draw_starfield();
     
     ppu_off();
+    draw_starfield();
     vram_adr(NTADR_A(0, 1));
     vram_unrle(status_bar);
     ppu_on_all();
-    
-    setup_graphics();
     
     game_over = false;
   }
@@ -658,11 +656,6 @@ void main()
           if (rollseq[i] >= 12)
             rollseq[i] = 12;
 
-          if(i == 0)
-            oam_id = oam_spr(actor_x[i]+4, actor_y[1] - 8, 0x2c, 0, oam_id);
-          else
-            oam_id = oam_spr(actor_x[i]+4, actor_y[0] + 16, 0x2c, 1, oam_id);
-
           oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
           actor_x[i] += actor_dx[i];
         }
@@ -671,10 +664,6 @@ void main()
           if(rollseq[i] >= 6)
             rollseq[i] = 6;
 
-          if(i == 0)
-            oam_id = oam_spr(actor_x[i]+4, actor_y[1] - 8, 0x2c, 0, oam_id);
-          else
-            oam_id = oam_spr(actor_x[i]+4, actor_y[0] + 16, 0x2c, 1, oam_id);
           oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
           actor_x[i] += actor_dx[i];
         }
@@ -682,10 +671,6 @@ void main()
         {
           rollseq[i] = 0;
           oam_id = oam_meta_spr(actor_x[i], actor_y[i], oam_id, playerRollSeq[i][rollseq[i]]);
-          if(i == 0)
-            oam_id = oam_spr(actor_x[i]+4, actor_y[1] - 8, 0x2c, 0, oam_id);
-          else
-            oam_id = oam_spr(actor_x[i]+4, actor_y[0] + 16, 0x2c, 1, oam_id);
         }
 
 
