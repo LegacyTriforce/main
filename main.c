@@ -273,6 +273,22 @@ int round_num = 0;
 
 
 
+// FADE IN FOR SCREENS
+void fade_in() {
+  byte vb;
+  for (vb=0; vb<=4; vb++) {
+    // set virtual bright value
+    pal_bright(vb);
+    // wait for 4/60 sec
+    ppu_wait_frame();
+    ppu_wait_frame();
+    ppu_wait_frame();
+    ppu_wait_frame();
+  }
+}
+
+
+
 // GENERATE RANDOM TILES
 byte rand_tile()
 {
@@ -292,12 +308,13 @@ void setup_graphics()
 {
   // set palette colors
   pal_all(PALETTE);
-  
+  pal_bright(0);
   vrambuf_clear();
   set_vram_update(updbuf);
   
   // turn on PPU
   ppu_on_all();
+  fade_in();
 }
 
 
@@ -319,12 +336,15 @@ void game_over_screen(bool player1Win)
 {
   game_over = true;
   ppu_off();
+  //pal_bg(PALETTE);
+  //pal_bright(0);
   vram_adr(NTADR_A(0, 0));
   if(player1Win)
     vram_unrle(player1WinScreen);
   else
     vram_unrle(player2WinScreen);
   ppu_on_all();
+  //fade_in();
 }
 
 
@@ -369,29 +389,6 @@ void restart_round(bool isGameOver)
   byte i;
   byte j;
   
-  if(!isGameOver)
-  {
-    round_num += 1;
-    if(actor_lives[0] == 0)
-      game_over_screen(false);
-    else if(actor_lives[1] == 0)
-      game_over_screen(true);
-  }
-  else
-  {
-    actor_lives[0] = 3;
-    actor_lives[1] = 3;
-    round_num = 0;
-    
-    ppu_off();
-    draw_starfield();
-    vram_adr(NTADR_A(0, 1));
-    vram_unrle(status_bar);
-    ppu_on_all();
-    
-    game_over = false;
-  }
-
   for(i = 0; i < NUM_ACTORS; i++)
   {
     if(round_num % 2 == 0)
@@ -441,6 +438,29 @@ void restart_round(bool isGameOver)
         mis->isFired = false;
       }
     }
+  }
+  
+  if(!isGameOver)
+  {
+    round_num += 1;
+    if(actor_lives[0] == 0)
+      game_over_screen(false);
+    else if(actor_lives[1] == 0)
+      game_over_screen(true);
+  }
+  else
+  {
+    actor_lives[0] = 3;
+    actor_lives[1] = 3;
+    round_num = 0;
+    
+    ppu_off();
+    draw_starfield();
+    vram_adr(NTADR_A(0, 1));
+    vram_unrle(status_bar);
+    ppu_on_all();
+    
+    game_over = false;
   }
 }
 
