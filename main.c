@@ -459,8 +459,9 @@ void move_missiles()
       Missile* mis = &missiles[i][j];
       if (mis->ypos != YOFFSCREEN) 
       {
+        mis->ypos += mis->dy;
         // hit the bottom or top?
-        if ((byte)(mis->ypos += mis->dy) < 46 || (byte)(mis->ypos += mis->dy) > YOFFSCREEN) 
+        if ((byte)mis->ypos < 46 || (byte)mis->ypos > 232) 
         {
           mis->ypos = YOFFSCREEN;
           mis->isFired = false;
@@ -539,13 +540,13 @@ void player_input()
           {
             mis->xpos = actor_x[i] + 4;
             mis->ypos = actor_y[i] - 16;
-            mis->dy = -2;
+            mis->dy = -3;
           }
           else
           {
             mis->xpos = actor_x[i] + 4;
             mis->ypos = actor_y[i] + 16;
-            mis->dy = 2;
+            mis->dy = 3;
           }
         }
       }
